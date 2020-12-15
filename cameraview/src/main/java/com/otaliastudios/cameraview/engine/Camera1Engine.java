@@ -326,6 +326,8 @@ public class Camera1Engine extends CameraBaseEngine implements
         return Tasks.forResult(null);
     }
 
+    private boolean isReleasingCamera = false;
+
     @EngineThread
     @NonNull
     @Override
@@ -350,12 +352,15 @@ public class Camera1Engine extends CameraBaseEngine implements
                 // I believe there is a thread deadlock due to this call internally waiting to
                 // dispatch some callback to us (pending captures, ...), but the callback thread
                 // is blocked here. We try to workaround this in CameraEngine.destroy().
+                isReleasingCamera = true;
                 mCamera.release();
                 LOG.i("onStopEngine:", "Clean up.", "Released camera.");
             } catch (Exception e) {
                 LOG.w("onStopEngine:", "Clean up.", "Exception while releasing camera.", e);
+                isReleasingCamera = false;
             }
             mCamera = null;
+            isReleasingCamera = false;
             mCameraOptions = null;
         }
         mVideoRecorder = null;
@@ -466,8 +471,11 @@ public class Camera1Engine extends CameraBaseEngine implements
     public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
         super.onVideoResult(result, exception);
         if (result == null) {
-            // Something went wrong, lock the camera again.
-            mCamera.lock();
+            // Don't lock the camera while camera is being released, otherwise we get a crash (attempted fix to a crash)
+            if (!isReleasingCamera) {
+                // Something went wrong, lock the camera again.
+                mCamera.lock();
+            }
         }
     }
 

@@ -91,35 +91,3 @@ tasks.register("runAndroidTests") { // changing name? change github workflow
         }
     }
 }
-
-// Merge the two with a jacoco task.
-jacoco { toolVersion = "0.8.5" }
-tasks.register("computeCoverage", JacocoReport::class) {
-    dependsOn("compileDebugSources") // Compile sources, needed below
-    executionData.from(fileTree(coverageInputDir))
-    sourceDirectories.from(android.sourceSets["main"].java.sourceFiles)
-    additionalSourceDirs.from("$buildDir/generated/source/buildConfig/debug")
-    additionalSourceDirs.from("$buildDir/generated/source/r/debug")
-    classDirectories.from(fileTree("$buildDir/intermediates/javac/debug") {
-        // Not everything here is relevant for CameraView, but let's keep it generic
-        exclude(
-                "**/R.class",
-                "**/R$*.class",
-                "**/BuildConfig.*",
-                "**/Manifest*.*",
-                "android/**",
-                "androidx/**",
-                "com/google/**",
-                "**/*\$ViewInjector*.*",
-                "**/Dagger*Component.class",
-                "**/Dagger*Component\$Builder.class",
-                "**/*Module_*Factory.class",
-                // We don"t test OpenGL filters.
-                "**/com/otaliastudios/cameraview/filters/**.*"
-        )
-    })
-    reports.html.isEnabled = true
-    reports.xml.isEnabled = true
-    reports.html.destination = file("$coverageOutputDir/html")
-    reports.xml.destination = file("$coverageOutputDir/xml/report.xml")
-}
