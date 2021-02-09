@@ -473,8 +473,11 @@ public class Camera1Engine extends CameraBaseEngine implements
         if (result == null) {
             // Don't lock the camera while camera is being released, otherwise we get a crash (attempted fix to a crash)
             if (!isReleasingCamera) {
-                // Something went wrong, lock the camera again.
-                mCamera.lock();
+                // Seems as previous boolean check is not enough, mCamera is still null sometimes (edge case crash)
+                if (mCamera != null) {
+                    // Something went wrong, lock the camera again.
+                    mCamera.lock();
+                }
             }
         }
     }

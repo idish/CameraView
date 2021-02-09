@@ -188,7 +188,13 @@ public abstract class MediaEncoder {
             public void run() {
                 LOG.i(mName, "Prepare was called. Executing.");
                 setState(STATE_PREPARING);
-                onPrepare(controller, maxLengthUs);
+                try {
+                    onPrepare(controller, maxLengthUs);
+                } catch (RuntimeException exception) {
+                    // Failed preparing, prevent crash (from crashlytics issues/5a54e786f9e5e1ab294ca98bc0475e30?time=last-seven-days&sessionEventKey=60220AA80304000126A424FD9E02BFAD_1505556734644289154)
+                    LOG.e(mName, "Failed preparing. Runtime Exception", exception.getMessage());
+                    return;
+                }
                 setState(STATE_PREPARED);
             }
         });
